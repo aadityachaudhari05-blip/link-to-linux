@@ -11,7 +11,7 @@ confinement: strict
 
 apps:
   link-to-linux:
-    command: usr/bin/python3 $SNAP/app.py
+    command: bin/link-to-linux
     extensions:
       - gnome
     environment:
