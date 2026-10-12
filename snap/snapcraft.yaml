@@ -1,27 +1,37 @@
 name: link-to-linux
 base: core24
 version: '1.0'
-summary: Effortlessly bridge and sync your Android device with Linux desktop
+summary: Connect your Android phone to your Linux desktop
 description: |
-  Link to Linux provides a seamless wireless connection experience for your desktop.
-  Generate a pairing QR code instantly to connect, transfer files, and monitor data.
+  Link to Linux provides a graphical interface for pairing an Android
+  device with a Linux desktop using a QR code.
 
 grade: stable
 confinement: strict
 
 apps:
   link-to-linux:
-    command: bin/python3 $SNAP/app.py
-    extensions: [gnome]
+    command: usr/bin/python3 $SNAP/app.py
+    extensions:
+      - gnome
+    environment:
+      PYTHONPATH: $SNAP/usr/lib/python3/dist-packages
+      GI_TYPELIB_PATH: $SNAP/usr/lib/x86_64-linux-gnu/girepository-1.0
     plugs:
       - network
       - network-bind
       - home
+      - desktop
+      - desktop-legacy
+      - wayland
+      - x11
 
 parts:
   link-to-linux:
     plugin: dump
     source: .
     stage-packages:
+      - python3-gi
       - python3-qrcode
-      - python3-pillow
+      - python3-pil
+      - gir1.2-gtk-4.0

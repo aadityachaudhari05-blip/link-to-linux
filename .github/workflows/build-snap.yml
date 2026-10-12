@@ -1,0 +1,26 @@
+name: Build Link to Linux Snap
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build Snap package
+        id: build
+        uses: snapcore/action-build@v1
+
+      - name: Upload Snap package
+        uses: actions/upload-artifact@v4
+        with:
+          name: link-to-linux-snap
+          path: ${{ steps.build.outputs.snap }}
+          if-no-files-found: error
