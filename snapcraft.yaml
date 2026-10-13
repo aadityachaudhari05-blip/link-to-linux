@@ -1,10 +1,10 @@
 name: link-to-linux
 base: core24
-version: '1.0'
+version: '1.1'
 summary: Connect your Android phone to your Linux desktop
 description: |
-  Link to Linux provides a graphical interface for pairing an Android
-  device with a Linux desktop using a QR code.
+  Link to Linux lets you pair an Android device with a Linux desktop
+  using a QR code and a local Wi-Fi connection.
 
 grade: stable
 confinement: strict
@@ -25,6 +25,14 @@ apps:
       - desktop-legacy
       - wayland
       - x11
+    slots:
+      - dbus-com.mrunu.LinkToLinux
+
+slots:
+  dbus-com.mrunu.LinkToLinux:
+    interface: dbus
+    bus: session
+    name: com.mrunu.LinkToLinux
 
 parts:
   link-to-linux:
@@ -35,4 +43,5 @@ parts:
       - python3-gi
       - python3-qrcode
       - python3-pil
+      - python3-flask
       - gir1.2-gtk-4.0

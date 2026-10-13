@@ -1,82 +1,110 @@
 import sys
-import gi
 import socket
-import qrcode
 import tempfile
-gi.require_version('Gtk', '4.0')
+from pathlib import Path
+
+import gi
+import qrcode
+
+gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
 
+
+SERVER_PORT = 8765
+
+
 def get_local_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    """Find the laptop's local network IP address."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
     try:
-        s.connect(("8.8.8.8", 80))
-        return s.getsockname()[0]
-    except Exception:
+        sock.connect(("8.8.8.8", 80))
+        return sock.getsockname()[0]
+    except OSError:
         return "127.0.0.1"
     finally:
-        s.close()
+        sock.close()
+
 
 class LinkToLinuxApp(Gtk.Application):
     def __init__(self):
-        super().__init__(application_id='com.mrunu.LinkToLinux')
+        super().__init__(application_id="com.mrunu.LinkToLinux")
 
     def do_activate(self):
-        # 1. Create the main application window
         window = Gtk.ApplicationWindow(application=self)
         window.set_title("Link to Linux")
-        window.set_default_size(450, 500)
+        window.set_default_size(450, 550)
 
-        # 2. Setup the layout container
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=15)
+        box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
+            spacing=15,
+        )
         box.set_margin_top(30)
         box.set_margin_bottom(30)
         box.set_margin_start(30)
         box.set_margin_end(30)
 
-        # 3. Add UI Labels (Title & IP info)
-        title_label = Gtk.Label(label="Link to Linux")
-        box.append(title_label)
+        title = Gtk.Label(label="Link to Linux")
+        title.set_markup("<span size='xx-large' weight='bold'>Link to Linux</span>")
+        box.append(title)
 
-        ip_address = get_local_ip()
-        ip_label = Gtk.Label(label=f"Your PC IP Address: {ip_address}")
+        self.ip_address = get_local_ip()
+        ip_label = Gtk.Label(
+            label=f"Laptop IP address: {self.ip_address}"
+        )
         box.append(ip_label)
 
-        self.status_label = Gtk.Label(label="Ready to connect. Make sure your phone is on the same Wi-Fi.")
+        self.status_label = Gtk.Label(
+            label="Connect your phone to the same Wi-Fi network."
+        )
+        self.status_label.set_wrap(True)
         box.append(self.status_label)
 
-        # 4. Add the Generation Action Button
         pair_button = Gtk.Button(label="Generate Pairing QR")
-        pair_button.connect('clicked', self.on_pair_clicked)
+        pair_button.connect("clicked", self.on_pair_clicked)
         box.append(pair_button)
 
-        # 5. Add the Visual QR Image (Scaled to 250px)
         self.qr_image = Gtk.Image()
-        self.qr_image.set_vexpand(True)
-        self.qr_image.set_hexpand(True)
         self.qr_image.set_pixel_size(250)
+        self.qr_image.set_vexpand(True)
         box.append(self.qr_image)
 
         window.set_child(box)
         window.present()
 
     def on_pair_clicked(self, button):
-        ip_address = get_local_ip()
-        self.status_label.set_text("QR Code Generated! Scan this with your phone app.")
-        
-        # Build the internal data structure for the QR code matrix
-        qr = qrcode.QRCode(version=1, box_size=10, border=4)
-        qr.add_data(f"LINK_TO_LINUX:{ip_address}")
-        qr.make(fit=True)
-        
-        # Render and save the image out to a temporary folder location
-        img = qr.make_image(fill_color="black", back_color="white")
-        img_path = f"{tempfile.gettempdir()}/pair_qr.png"
-        img.save(img_path)
-        
-        # Display the crisp, scaled file natively on your app canvas
-        self.qr_image.set_from_file(img_path)
-        print(f"QR code successfully displayed from path: {img_path}")
+        self.ip_address = get_local_ip()
 
-if __name__ == '__main__':
+        # The QR code contains a real URL that opens the laptop's server.
+        pairing_url = (
+            f"http://{self.ip_address}:{SERVER_PORT}/pair"
+        )
+
+        qr = qrcode.QRCode(
+            version=None,
+            box_size=8,
+            border=4,
+        )
+        qr.add_data(pairing_url)
+        qr.make(fit=True)
+
+        image = qr.make_image(
+            fill_color="black",
+            back_color="white",
+        )
+
+        image_path = Path(tempfile.gettempdir()) / "link-to-linux-qr.png"
+        image.save(image_path)
+
+        self.qr_image.set_from_file(str(image_path))
+        self.status_label.set_text(
+            "QR code ready! Scan it with your phone while both devices "
+            "are connected to the same Wi-Fi network."
+        )
+
+        print(f"Pairing URL: {pairing_url}", flush=True)
+
+
+if __name__ == "__main__":
     app = LinkToLinuxApp()
     sys.exit(app.run(sys.argv))

@@ -1,2 +1,17 @@
 #!/bin/sh
-exec python3 "$SNAP/app.py" "$@"
+
+# Start the Link to Linux connection server in the background.
+python3 "$SNAP/server.py" &
+SERVER_PID=$!
+
+# Stop the server when the desktop application exits.
+cleanup() {
+    kill "$SERVER_PID" 2>/dev/null
+}
+trap cleanup EXIT INT TERM
+
+# Launch the desktop application.
+python3 "$SNAP/app.py" "$@"
+
+exit_code=$?
+exit "$exit_code"
