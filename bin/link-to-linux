@@ -1,2 +1,2 @@
 #!/bin/sh
-exec "$SNAP/usr/bin/python3" "$SNAP/app.py" "$@"
+exec python3 "$SNAP/app.py" "$@"
